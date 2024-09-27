@@ -1,0 +1,30 @@
+services:
+    train:
+        build: 
+            context: .
+            dockerfile: Dockerfile
+        volumes:
+          - dogbreed:/opt/mount
+        network_mode: "host"
+        command: ["python", "train.py"]
+
+    evaluate:
+        build: 
+            context: .
+            dockerfile: Dockerfile
+        volumes:
+          - dogbreed:/opt/mount
+        network_mode: "host"
+        command: ["python", "eval.py"]
+
+    infer:
+        build: 
+            context: .
+            dockerfile: Dockerfile
+        volumes:
+          - dogbreed:/opt/mount
+        network_mode: "host"
+        command: ["python", "infer.py"]
+
+volumes:
+   dogbreed:
