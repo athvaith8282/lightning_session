@@ -44,6 +44,8 @@ def main(cfg: DictConfig):
     # Replace checkpoint_path in the Hydra config with the value from the .env file
     if 'CHECKPOINT_PATH' in os.environ:
         cfg.infer_model.checkpoint_path = os.environ['CHECKPOINT_PATH']
+    
+    logger.info(f"Using model from path {cfg.infer_model.checkpoint_path}")
 
     setup_logger(Path(cfg.paths.output_dir)/"infer.log")
 
