@@ -61,6 +61,8 @@ class DogBreedDataModule(LightningDataModule):
     def prepare_data(self):
         
         gdrive_url = self._gdrive_url
+        if not os.path.exists(self._download_dir):
+            os.makedirs(self._download_dir)
         output = os.path.join(self._download_dir, "dogbreed.zip")
         gdown.download(gdrive_url, output, quiet=False)
 
