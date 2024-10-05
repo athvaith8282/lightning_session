@@ -31,7 +31,7 @@ def train(
     trainer.fit(model, datamodule)
     train_metrics = trainer.callback_metrics
     logger.info("saving best model to .env model_path")
-    set_key('.env', 'model_path', trainer.checkpoint_callback.best_model_path)
+    set_key('.env', 'CHECKPOINT_PATH', trainer.checkpoint_callback.best_model_path)
     logger.info(f"Training metrics:\n{train_metrics}")
 
 

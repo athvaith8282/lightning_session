@@ -1,5 +1,7 @@
 import lightning as L
 import hydra
+import os
+from dotenv import load_dotenv
 
 from omegaconf import DictConfig
 from loguru import logger
@@ -33,7 +35,14 @@ def test(
 
 @hydra.main(version_base=None, config_path="../configs", config_name="eval.yaml")
 def main(cfg: DictConfig):
+    # Load environment variables from .env file
+    load_dotenv()
 
+    # Replace checkpoint_path in the Hydra config with the value from the .env file
+    if 'CHECKPOINT_PATH' in os.environ:
+        cfg.test_model.checkpoint_path = os.environ['CHECKPOINT_PATH']
+
+    logger.info(f"Using model from path {cfg.test_model.checkpoint_path}")
 
     setup_logger(log_file= Path(cfg.paths.output_dir)/"test.log")
 

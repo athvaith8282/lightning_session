@@ -21,6 +21,12 @@ from omegaconf import DictConfig
 from src.utils.logging_utils import setup_logger
 
 import rootutils
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
 def get_dataset(root_dir):
@@ -35,6 +41,9 @@ def get_n_image_paths(dataset, n = 10):
 
 @hydra.main(version_base=None, config_path="../configs", config_name="infer.yaml")
 def main(cfg: DictConfig):
+    # Replace checkpoint_path in the Hydra config with the value from the .env file
+    if 'CHECKPOINT_PATH' in os.environ:
+        cfg.infer_model.checkpoint_path = os.environ['CHECKPOINT_PATH']
 
     setup_logger(Path(cfg.paths.output_dir)/"infer.log")
 
