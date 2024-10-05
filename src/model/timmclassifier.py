@@ -8,24 +8,32 @@ from torchmetrics import Accuracy
 from timm import create_model
 
 
-class DogBreedClassifier(LightningModule):
+class TimmClassifier(LightningModule):
 
-    def __init__(self, lr:float = 1e-3):
+    def __init__(self, 
+        base_model_name: str, 
+        num_classes: int, 
+        pretrained: bool = True, 
+        lr:float = 1e-3, 
+        weight_decay: float = 1e-5,
+        factor: float = 0.1,
+        patience: int = 10,
+        min_lr: float = 1e-6):
         
         super().__init__()
-        self.lr = lr 
+        self.save_hyperparameters()
+
 
         self.model = create_model(
-            model_name="resnet18",
-            pretrained=True,
-            num_classes = 10 
+            model_name=self.hparams.base_model_name,
+            pretrained=self.hparams.pretrained,
+            num_classes = self.hparams.num_classes 
             )
         
-        self.train_accuracy = Accuracy('multiclass', num_classes=10)
-        self.val_accuracy = Accuracy('multiclass', num_classes=10)
-        self.test_accuracy = Accuracy('multiclass', num_classes=10)
+        self.train_accuracy = Accuracy('multiclass', num_classes=self.hparams.num_classes)
+        self.val_accuracy = Accuracy('multiclass', num_classes=self.hparams.num_classes)  
+        self.test_accuracy = Accuracy('multiclass', num_classes=self.hparams.num_classes)
 
-        self.save_hyperparameters()
     
     def forward(self, x):
         return self.model(x)
@@ -59,4 +67,25 @@ class DogBreedClassifier(LightningModule):
         self.log("test_acc", self.test_accuracy, prog_bar=True)
 
     def configure_optimizers(self):
-        return optim.Adam(self.parameters(), self.lr)
+
+        optimizer = optim.Adam(
+            self.parameters(),
+            lr=self.hparams.lr,
+            weight_decay=self.hparams.weight_decay,
+        )
+
+        scheduler = optim.lr_scheduler.ReduceLROnPlateau(
+            optimizer,
+            factor=self.hparams.factor,
+            patience=self.hparams.patience,
+            min_lr=self.hparams.min_lr,
+        )
+
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": {
+                "scheduler": scheduler,
+                "monitor": "val_loss",
+                "interval": "epoch",
+            },
+        }

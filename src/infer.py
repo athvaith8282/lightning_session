@@ -1,8 +1,5 @@
 import lightning as L
 
-from model.dogbreed_model import DogBreedClassifier
-from datamodules.dogbreed import DogBreedDataModule
-
 from lightning.pytorch.loggers import TensorBoardLogger
 
 from torchvision.datasets import ImageFolder
@@ -16,6 +13,16 @@ from PIL import Image as PILImage
 
 from torchmetrics import Accuracy
 
+import hydra
+from pathlib import Path
+from loguru import logger
+from omegaconf import DictConfig
+
+from src.utils.logging_utils import setup_logger
+
+import rootutils
+rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
+
 def get_dataset(root_dir):
 
     return ImageFolder(root=root_dir)
@@ -25,15 +32,17 @@ def get_n_image_paths(dataset, n = 10):
    samples = random.sample(dataset.samples, n)
    return samples
 
-if __name__ == "__main__": 
 
-    best_model_path = "logs/test_1/version_2/checkpoints/epoch=2-step=39.ckpt"
+@hydra.main(version_base=None, config_path="../configs", config_name="infer.yaml")
+def main(cfg: DictConfig):
 
-    img_datadir = "./data/dogbreed/dataset"
+    setup_logger(Path(cfg.paths.output_dir)/"infer.log")
+
+    img_datadir = cfg.paths.data_dir
 
     dataset = get_dataset(img_datadir)
 
-    samples = get_n_image_paths(dataset, 10)
+    samples = get_n_image_paths(dataset, cfg.infer_n_images)
 
     transform = transforms.Compose([
             transforms.Resize((224, 224)),
@@ -45,7 +54,7 @@ if __name__ == "__main__":
     paths, labels = zip(*samples)
     batch = torch.stack([transform(PILImage.open(path).convert('RGB')) for path in paths])
 
-    model = DogBreedClassifier.load_from_checkpoint(best_model_path) 
+    model = hydra.utils.instantiate(cfg.infer_model)
     model.eval()
     batch = batch.to(model.device)
     labels = torch.tensor(labels).to(model.device)
@@ -58,5 +67,12 @@ if __name__ == "__main__":
         probabilities = probabilities.to(model.device)
         inference_accuracy(probabilities, labels)
 
-    print(f"Inference Accuracy: {inference_accuracy.compute()}")
+    logger.info(f"Inference Accuracy: {inference_accuracy.compute()}")
 
+
+
+if __name__ == "__main__": 
+
+    main()
+
+    

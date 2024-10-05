@@ -1,0 +1,10 @@
+defaults:
+  - paths: default
+  - hydra: default
+
+task_name: "hydra_test"
+infer_n_images: 10
+
+infer_model:
+  _target_: src.model.timmclassifier.TimmClassifier.load_from_checkpoint
+  checkpoint_path : "/Users/athvaithk/Documents/prep/EMLO/lightning_session4/logs/hydra_test/runs/2024-10-04_18-07-10/checkpoints/epoch_001.ckpt"
