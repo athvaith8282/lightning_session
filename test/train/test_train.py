@@ -8,7 +8,7 @@ def config():
     with hydra.initialize(version_base=None, config_path="../../configs"):
         cfg = hydra.compose(
             config_name="train",
-            overrides=["experiment=dogbreed_ex", "trainer.fast_dev_run=True"],
+            overrides=["experiment=dogbreed_ex"],
         )
         return cfg
 
