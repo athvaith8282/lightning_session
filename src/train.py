@@ -15,6 +15,9 @@ from src.utils.instantiate_utils import instantiate_callbacks, instantiate_logge
 import rootutils
 rootutils.setup_root(__file__, indicator=".project-root", pythonpath=True)
 
+import os 
+from dotenv import load_dotenv, set_key
+
 def set_seed(seed: int = 42):
     L.seed_everything(seed=42, workers=True)
 
@@ -27,6 +30,8 @@ def train(
     logger.info("Starting training!")
     trainer.fit(model, datamodule)
     train_metrics = trainer.callback_metrics
+    logger.info("saving best model to .env model_path")
+    set_key('.env', 'model_path', trainer.checkpoint_callback.best_model_path)
     logger.info(f"Training metrics:\n{train_metrics}")
 
 
@@ -75,4 +80,5 @@ def main(cfg: DictConfig):
 
 if __name__ == "__main__":
 
+    load_dotenv()
     main()
