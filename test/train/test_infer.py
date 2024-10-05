@@ -3,7 +3,6 @@ import hydra
 
 from src.infer import main
 
-@pytest.mark.dependency(depends=["test_dogbreed_ex_main"])  # Add this line
 def test_dogbreed_ex_infering(infer_cfg, tmp_path):
 
     infer_cfg.paths.output_dir = str(tmp_path)
