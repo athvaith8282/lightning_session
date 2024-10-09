@@ -9,3 +9,11 @@ defaults:
   - override /callbacks: default
   - override /loggers: default
   - override /trainer: default
+
+task_name: hydra_test
+
+tags: ["run1"]
+
+train: True
+
+test: True

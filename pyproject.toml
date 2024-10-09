@@ -22,4 +22,5 @@ dependencies = [
     "torch==2.4.1+cpu",
     "torchvision==0.19.1+cpu",
     "torchviz==0.0.2",
+    "scikit-learn>=1.5.2",
 ]

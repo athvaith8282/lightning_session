@@ -44,8 +44,8 @@ class TimmClassifier(LightningModule):
         loss = F.cross_entropy(logits, y)
         preds = F.softmax(logits, dim=1)
         self.train_accuracy(preds, y)
-        self.log("train_loss", loss, prog_bar=True)
-        self.log("train_acc", self.train_accuracy, prog_bar=True)
+        self.log("train/loss", loss, prog_bar=True)
+        self.log("train/acc", self.train_accuracy, prog_bar=True)
         return loss 
 
     def validation_step(self, batch, batch_idx):
@@ -54,8 +54,8 @@ class TimmClassifier(LightningModule):
         loss = F.cross_entropy(logits, y)
         preds = F.softmax(logits, dim=1)
         self.val_accuracy(preds, y)
-        self.log("val_loss", loss, prog_bar=True)
-        self.log("val_acc", self.val_accuracy, prog_bar=True)
+        self.log("val/loss", loss, prog_bar=True)
+        self.log("val/acc", self.val_accuracy, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         x,y = batch 
@@ -63,8 +63,8 @@ class TimmClassifier(LightningModule):
         loss = F.cross_entropy(logits, y)
         preds = F.softmax(logits, dim=1)
         self.test_accuracy(preds, y)
-        self.log("test_loss", loss, prog_bar=True)
-        self.log("test_acc", self.test_accuracy, prog_bar=True)
+        self.log("test/loss", loss, prog_bar=True)
+        self.log("test/acc", self.test_accuracy, prog_bar=True)
 
     def configure_optimizers(self):
 
@@ -85,7 +85,7 @@ class TimmClassifier(LightningModule):
             "optimizer": optimizer,
             "lr_scheduler": {
                 "scheduler": scheduler,
-                "monitor": "val_loss",
+                "monitor": "val/loss",
                 "interval": "epoch",
             },
         }

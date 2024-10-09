@@ -1,0 +1,7 @@
+_target_: src.datamodules.catdog.CatDogData
+
+data_dir: ${paths.data_dir}/PetImages
+batch_size: 2
+num_workers: 2
+splits: [0.8, 0.1, 0.1]
+pin_memory: False
