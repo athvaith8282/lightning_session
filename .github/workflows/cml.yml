@@ -2,7 +2,8 @@ name: Train and Report
 
 on:
   pull_request:
-    branches: [ session_06_pr ]
+    types: [opened]
+    branches: [ main ]
 
 jobs:
   train-and-report:
