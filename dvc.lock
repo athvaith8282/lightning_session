@@ -1,0 +1,44 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python3 -m src.train experiment=catdog_ex
+    deps:
+    - path: configs/experiment/catdog_ex.yaml
+      hash: md5
+      md5: e954723770af3e798c817c3a7393f45d
+      size: 651
+    - path: data/
+      hash: md5
+      md5: ac8c75039bd8c3661cf70d18d8aa98e3.dir
+      size: 874391822
+      nfiles: 25970
+    - path: src/train.py
+      hash: md5
+      md5: 8f29dd02682f7050e7d4abd9c8dddfa7
+      size: 2410
+    outs:
+    - path: logs/
+      hash: md5
+      md5: b41bdef6cfb350f896a88f9df3127c5b.dir
+      size: 7563359
+      nfiles: 12
+  infer:
+    cmd: python3 -m src.infer
+    deps:
+    - path: .env
+      hash: md5
+      md5: e28ad370903c0e4b457edd8bb7dbc6f0
+      size: 285
+    - path: configs/infer.yaml
+      hash: md5
+      md5: 5ac599f18ccc7ffb1a02e4531dff3eac
+      size: 388
+    - path: data/PetImages
+      hash: md5
+      md5: b2c461b1b0bcb7a0a2318d5be1f13758.dir
+      size: 866190740
+      nfiles: 25002
+    - path: src/infer.py
+      hash: md5
+      md5: 48203d2f67606c21b4849936a6dcaad6
+      size: 3535
