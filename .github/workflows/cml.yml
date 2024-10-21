@@ -34,11 +34,14 @@ jobs:
 
     - name: Setup CML
       uses: iterative/setup-cml@v2
+    
+    - name: Info DVC 
+      run: dvc doctor
 
     - name: Pull DVC data
       env:
         GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CRED_JSON }}
-      run: dvc pull
+      run: dvc pull -v 
 
     - name: Train model
       run: |
