@@ -1,0 +1,17 @@
+stages:
+  train:
+    cmd: python3 -m src.train experiment=catdog_ex
+    deps:
+    - configs/experiment/catdog_ex.yaml
+    - data/
+    - src/train.py
+    outs:
+    - logs/:
+        cache: false
+  infer:
+    cmd: python3 -m src.infer
+    deps:
+    - .env
+    - configs/infer.yaml
+    - data/PetImages
+    - src/infer.py

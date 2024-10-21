@@ -1,0 +1,89 @@
+name: Train and Report
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [ main ]
+
+jobs:
+  train-and-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+
+    - name: Set up Python 3.12
+      run: uv python install 3.12
+
+    - name: Install dependencies
+      env:
+        UV_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
+      run: |
+        uv sync
+
+    - name: Setup DVC
+      uses: iterative/setup-dvc@v1
+
+    - name: Setup CML
+      uses: iterative/setup-cml@v2
+    
+    - name: Info DVC 
+      run: dvc doctor
+
+    - name: Pull DVC data
+      env:
+        GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CRED_JSON }}
+      run: dvc pull -v 
+
+    - name: Train model
+      run: |
+        uv run dvc repro
+    
+    - name: Create CML report
+      env:
+        REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "## Training Metrics" >> report.md
+        
+        # Find the latest metrics.csv file
+        METRICS_FILE=$(find logs/cat_dog_exp/runs -name "metrics.csv" | sort -r | head -n 1)
+        
+        # Generate plots using the Python script
+        uv run python scripts/generate_plots.py "$METRICS_FILE"
+
+        # Add plots to the report
+        echo "### Accuracy" >> report.md
+        echo '![](./training_and_validation_accuracy_plot.png "Accuracy plot")' >> report.md
+       
+        echo "### Loss" >> report.md
+        echo '![](./training_and_validation_loss_plot.png "Loss plot")' >> report.md
+        
+        echo '### Confusion_matrix'
+        echo '![](./confusion_matrix.png "Confusion matrix")' >> report.md
+
+
+        echo "## Prediction Images" >> report.md
+        for image in prediction/*.png; do
+          echo "![]($image)" >> report.md
+        done
+
+        
+        # Add test metrics if available
+        if grep -q "test/acc" $METRICS_FILE; then
+          echo "## Test Metrics" >> report.md
+          TEST_ACC=$(tail -n 1 $METRICS_FILE | cut -d',' -f3)
+          TEST_LOSS=$(tail -n 1 $METRICS_FILE | cut -d',' -f4)
+          echo "- Test Accuracy: $TEST_ACC" >> report.md
+          echo "- Test Loss: $TEST_LOSS" >> report.md
+        fi
+        
+        # Create and post the report
+        cml comment create report.md

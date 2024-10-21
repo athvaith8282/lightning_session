@@ -1,0 +1,19 @@
+# @package _global_
+
+# to execute this experiment run:
+# python train.py experiment=catdog_ex
+
+defaults:
+  - override /data: dogbreed
+  - override /model: timm_classifier
+  - override /callbacks: default
+  - override /loggers: default
+  - override /trainer: default
+
+task_name: hydra_test
+
+tags: ["run1"]
+
+train: True
+
+test: True

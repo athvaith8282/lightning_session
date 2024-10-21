@@ -1,0 +1,10 @@
+defaults:
+  - _self_
+  - paths: default
+  - data: dogbreed
+  - model: timm_classifier
+  - trainer: default
+  - hydra: default
+  - loggers: default
+  - callbacks: default
+  - experiment: dogbreed_ex

@@ -1,0 +1,9 @@
+_target_: src.datamodules.dogbreed.DogBreedDataModule
+
+gdrive_url: https://drive.google.com/uc?/export=download&id=1ElH94_zj_AWNo4DIeYQ2YckoRktLWg81
+download_dir: ${paths.data_dir}
+data_dir: ${paths.data_dir}/dogbreed/dataset
+batch_size: 64
+num_workers: 2
+splits: [0.8, 0.1, 0.1]
+pin_memory: False
