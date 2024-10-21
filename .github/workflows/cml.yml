@@ -54,7 +54,7 @@ jobs:
         echo "## Training Metrics" >> report.md
         
         # Find the latest metrics.csv file
-        METRICS_FILE=$(find logs/train/runs -name "metrics.csv" | sort -r | head -n 1)
+        METRICS_FILE=$(find logs/cat_dog_exp/runs -name "metrics.csv" | sort -r | head -n 1)
         
         # Generate plots using the Python script
         uv run python scripts/generate_plots.py "$METRICS_FILE"
