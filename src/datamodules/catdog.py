@@ -3,6 +3,8 @@ from lightning.pytorch.core import LightningDataModule
 
 from torchvision import transforms
 from torchvision.datasets import ImageFolder
+from PIL import Image
+
 
 from torch.utils.data import Subset, DataLoader
 
@@ -29,6 +31,7 @@ class CatDogData(LightningDataModule):
         self._num_workers = num_workers 
         self._split = splits
         self._pin_memory = pin_memory
+        self.validated = False  # Flag to check if validation has been done
     
     @property 
     def data_dir(self):
@@ -37,7 +40,7 @@ class CatDogData(LightningDataModule):
     @property
     def train_transform(self):
         return transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize((160, 160)),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
             self.normalize_transform,
@@ -50,7 +53,7 @@ class CatDogData(LightningDataModule):
     @property
     def val_transform(self):
         return transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize((160, 160)),
             transforms.ToTensor(),
             self.normalize_transform,
         ])
@@ -58,24 +61,39 @@ class CatDogData(LightningDataModule):
     @property 
     def test_transform(self):
         return transforms.Compose([
-            transforms.Resize((224, 224)),
+            transforms.Resize((160, 160)),
             transforms.ToTensor(),
             self.normalize_transform,
         ])
     
     
     def setup(self, stage=None):
+        if not self.validated:  # Check if validation has already been done
+            valid_samples = []
+            self.full_dataset = ImageFolder(self._data_dir)
 
-        self.full_dataset  =  ImageFolder(self._data_dir)
+            # Check each image for loadability
+            for path, _ in self.full_dataset.samples:
+                try:
+                    # Attempt to open the image
+                    img = Image.open(path)
+                    img.verify()  # Verify that it is an image
+                    valid_samples.append((path, _))  # Keep valid samples
+                except Exception as e:
+                    print(f"Skipping invalid image {path}: {e}")
+
+            # Update the full dataset with valid samples
+            self.full_dataset.samples = valid_samples
+            self.validated = True  # Set the flag to True after validation
 
         labels = np.array([sample[1] for sample in self.full_dataset.samples])
 
         # Initialize stratified split with 80-10-10 proportions
-        sss_train_val = StratifiedShuffleSplit(n_splits=1, train_size = self._split[0] ,test_size=(self._split[1]+self._split[2]))
+        sss_train_val = StratifiedShuffleSplit(n_splits=1, train_size=self._split[0], test_size=(self._split[1] + self._split[2]))
         train_idx, test_val_idx = next(sss_train_val.split(np.zeros(len(labels)), labels))
 
         # Further split test and validation from the 20% using another stratified split
-        sss_val_test = StratifiedShuffleSplit(n_splits=1, test_size=(self._split[1]+self._split[2])/2)
+        sss_val_test = StratifiedShuffleSplit(n_splits=1, test_size=(self._split[1] + self._split[2]) / 2)
         val_idx, test_idx = next(sss_val_test.split(np.zeros(len(test_val_idx)), labels[test_val_idx]))
 
         # Assign indices to datasets
