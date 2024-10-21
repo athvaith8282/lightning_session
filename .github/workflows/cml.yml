@@ -61,15 +61,13 @@ jobs:
 
         # Add plots to the report
         echo "### Accuracy" >> report.md
-        echo '![](./train_acc_plot.png "Training Accuracy")' >> report.md
-        echo '![](./val_acc_plot.png "Validation Accuracy")' >> report.md
-        
-        echo "### Loss" >> report.md
         echo '![](./training_and_validation_accuracy_plot.png "Accuracy plot")' >> report.md
-        echo '![](./training_and_validation_loss_plot.png")' >> report.md
+       
+        echo "### Loss" >> report.md
+        echo '![](./training_and_validation_loss_plot.png "Loss plot")' >> report.md
         
         echo '### Confusion_matrix'
-        echo '![](./confusion_matrix.png")' >> report.md
+        echo '![](./confusion_matrix.png "Confusion matrix")' >> report.md
 
 
         echo "## Prediction Images" >> report.md
