@@ -4,7 +4,7 @@ from lightning.pytorch.core import LightningModule
 from torch import optim 
 import torch
 import torch.nn.functional as F
-from torchmetrics import Accuracy, ConfusionMatrix
+from torchmetrics import Accuracy, ConfusionMatrix, MaxMetric
 from timm import create_model
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -20,22 +20,32 @@ class TimmClassifier(LightningModule):
         weight_decay: float = 1e-5,
         factor: float = 0.1,
         patience: int = 10,
-        min_lr: float = 1e-6):
+        min_lr: float = 1e-6,
+        **kwargs
+        ):
         
         super().__init__()
         self.save_hyperparameters()
+
+        if 'depths' in kwargs:
+            kwargs['depths'] = tuple(kwargs['depths'])
+
+        if 'dims' in kwargs:
+            kwargs['dims'] = tuple(kwargs['dims'])
 
 
         self.model = create_model(
             model_name=self.hparams.base_model_name,
             pretrained=self.hparams.pretrained,
-            num_classes = self.hparams.num_classes 
+            num_classes = self.hparams.num_classes,
+            **kwargs 
             )
         
         self.train_accuracy = Accuracy('multiclass', num_classes=self.hparams.num_classes)
         self.val_accuracy = Accuracy('multiclass', num_classes=self.hparams.num_classes)  
         self.test_accuracy = Accuracy('multiclass', num_classes=self.hparams.num_classes)
         self.confusion_matrix = ConfusionMatrix(task='multiclass', num_classes=self.hparams.num_classes)
+        self.test_acc_best = MaxMetric()
     
     def forward(self, x):
         return self.model(x)
@@ -85,6 +95,9 @@ class TimmClassifier(LightningModule):
         
         self.confusion_matrix.reset()  # Reset for next test
 
+        self.test_acc_best(self.test_accuracy.compute())
+        self.log("test/acc_best", self.test_acc_best.compute(), prog_bar=True)
+        
     def configure_optimizers(self):
 
         optimizer = optim.Adam(

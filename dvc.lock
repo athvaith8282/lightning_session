@@ -1,27 +1,31 @@
 schema: '2.0'
 stages:
   train:
-    cmd: python3 -m src.train experiment=catdog_ex
+    cmd: python3 -m src.train --multirun experiment=catrabbit_ex hparam=catrabbit
     deps:
-    - path: configs/experiment/catdog_ex.yaml
+    - path: configs/experiment/catrabbit_ex.yaml
       hash: md5
-      md5: e954723770af3e798c817c3a7393f45d
-      size: 651
+      md5: 60c802f984fcd8835cdcf219d6a89f17
+      size: 655
+    - path: configs/hparam/catrabbit.yaml
+      hash: md5
+      md5: be60ad0a7c462be5eb2ef70d9f3cf282
+      size: 591
     - path: data/
       hash: md5
-      md5: ac8c75039bd8c3661cf70d18d8aa98e3.dir
-      size: 874391822
-      nfiles: 25970
+      md5: 3b442bd9385b41594f304bbd8e184e10.dir
+      size: 260399448
+      nfiles: 7983
     - path: src/train.py
       hash: md5
-      md5: 8f29dd02682f7050e7d4abd9c8dddfa7
-      size: 2410
+      md5: 32fbda0aa8a24d85833e71f1ea198fd1
+      size: 2915
     outs:
     - path: logs/
       hash: md5
-      md5: b41bdef6cfb350f896a88f9df3127c5b.dir
-      size: 7563359
-      nfiles: 12
+      md5: 6e07e2fc5bb56b0f83bddcec0f070a4e.dir
+      size: 21066824
+      nfiles: 79
   infer:
     cmd: python3 -m src.infer
     deps:

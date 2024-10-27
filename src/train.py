@@ -34,6 +34,7 @@ def train(
     set_key('.env', 'CHECKPOINT_PATH', trainer.checkpoint_callback.best_model_path)
     logger.info(f"Training metrics:\n{train_metrics}")
 
+    return train_metrics
 
 @task_wrapper
 def test(
@@ -54,6 +55,8 @@ def test(
         test_metrics = trainer.test(model, datamodule)
     logger.info(f"Test metrics:\n{test_metrics}")
 
+    return test_metrics[0] if test_metrics else {}
+
 @hydra.main(version_base=None, config_path="../configs", config_name="train.yaml")
 def main(cfg: DictConfig):
 
@@ -72,13 +75,27 @@ def main(cfg: DictConfig):
         logger = loggers
     )
 
+    train_metrics = {}
     if cfg.get("train"):
-        train(trainer, model, data_module)
+        train_metrics = train(trainer, model, data_module)
 
+    test_metrics = {}
     if cfg.get("test"):
-        test(trainer, model, data_module)
+        test_metrics = test(trainer, model, data_module)
+
+    all_metrics = {**train_metrics, **test_metrics}
+
+    optimization_metric = all_metrics.get(cfg.get("optimization_metric"))
+    if optimization_metric is None:
+        logger.warning(f"Optimization metric '{cfg.get('optimization_metric')}' not found in metrics. Returning 0.")
+        return 0.0
+    
+    return optimization_metric
 
 if __name__ == "__main__":
 
-    load_dotenv()
-    main()
+    try:
+        load_dotenv()
+        main()
+    except Exception as e:
+        logger.exception(e)
