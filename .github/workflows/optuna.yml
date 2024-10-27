@@ -1,6 +1,9 @@
-name: Train and Report
+name: Train and Find Hparam
 
-on: []
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [ main ]
 
 jobs:
   train-and-report:
@@ -38,7 +41,7 @@ jobs:
     - name: Pull DVC data
       env:
         GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CRED_JSON }}
-      run: dvc pull -v 
+      run: dvc pull CatRabbit -v 
 
     - name: Train model
       run: |
@@ -51,36 +54,20 @@ jobs:
         echo "## Training Metrics" >> report.md
         
         # Find the latest metrics.csv file
-        METRICS_FILE=$(find logs/cat_dog_exp/runs -name "metrics.csv" | sort -r | head -n 1)
+        METRICS_FILE=$(find logs/CatRabbit_128/multiruns -name "optimization_results.yaml" | sort -r | head -n 1)
+
+        echo -e "# Optuna Results\n" > report.md
+        cat ${METRICS_FILE} >> report.md 
         
         # Generate plots using the Python script
-        uv run python scripts/generate_plots.py "$METRICS_FILE"
+        uv run python scripts/generate_plots.py ./logs/
 
         # Add plots to the report
         echo "### Accuracy" >> report.md
-        echo '![](./training_and_validation_accuracy_plot.png "Accuracy plot")' >> report.md
+        echo '![](./training_plots/training_and_validation_accuracy_plot.png "Accuracy plot")' >> report.md
        
         echo "### Loss" >> report.md
-        echo '![](./training_and_validation_loss_plot.png "Loss plot")' >> report.md
-        
-        echo '### Confusion_matrix'
-        echo '![](./confusion_matrix.png "Confusion matrix")' >> report.md
-
-
-        echo "## Prediction Images" >> report.md
-        for image in prediction/*.png; do
-          echo "![]($image)" >> report.md
-        done
-
-        
-        # Add test metrics if available
-        if grep -q "test/acc" $METRICS_FILE; then
-          echo "## Test Metrics" >> report.md
-          TEST_ACC=$(tail -n 1 $METRICS_FILE | cut -d',' -f3)
-          TEST_LOSS=$(tail -n 1 $METRICS_FILE | cut -d',' -f4)
-          echo "- Test Accuracy: $TEST_ACC" >> report.md
-          echo "- Test Loss: $TEST_LOSS" >> report.md
-        fi
+        echo '![](./training_plots/training_and_validation_loss_plot.png "Loss plot")' >> report.md
         
         # Create and post the report
         cml comment create report.md
