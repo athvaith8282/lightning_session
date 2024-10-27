@@ -41,7 +41,7 @@ jobs:
     - name: Pull DVC data
       env:
         GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CRED_JSON }}
-      run: dvc pull CatRabbit -v 
+      run: dvc pull data/CatRabbit -v 
 
     - name: Train model
       run: |
