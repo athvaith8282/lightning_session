@@ -1,0 +1,48 @@
+schema: '2.0'
+stages:
+  train:
+    cmd: python3 -m src.train --multirun experiment=catrabbit_ex hparam=catrabbit
+    deps:
+    - path: configs/experiment/catrabbit_ex.yaml
+      hash: md5
+      md5: 60c802f984fcd8835cdcf219d6a89f17
+      size: 655
+    - path: configs/hparam/catrabbit.yaml
+      hash: md5
+      md5: be60ad0a7c462be5eb2ef70d9f3cf282
+      size: 591
+    - path: data/
+      hash: md5
+      md5: 3b442bd9385b41594f304bbd8e184e10.dir
+      size: 260399448
+      nfiles: 7983
+    - path: src/train.py
+      hash: md5
+      md5: 32fbda0aa8a24d85833e71f1ea198fd1
+      size: 2915
+    outs:
+    - path: logs/
+      hash: md5
+      md5: 6e07e2fc5bb56b0f83bddcec0f070a4e.dir
+      size: 21066824
+      nfiles: 79
+  infer:
+    cmd: python3 -m src.infer
+    deps:
+    - path: .env
+      hash: md5
+      md5: e28ad370903c0e4b457edd8bb7dbc6f0
+      size: 285
+    - path: configs/infer.yaml
+      hash: md5
+      md5: 5ac599f18ccc7ffb1a02e4531dff3eac
+      size: 388
+    - path: data/PetImages
+      hash: md5
+      md5: b2c461b1b0bcb7a0a2318d5be1f13758.dir
+      size: 866190740
+      nfiles: 25002
+    - path: src/infer.py
+      hash: md5
+      md5: 48203d2f67606c21b4849936a6dcaad6
+      size: 3535

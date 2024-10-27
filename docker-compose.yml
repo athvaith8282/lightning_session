@@ -4,27 +4,30 @@ services:
             context: .
             dockerfile: Dockerfile
         volumes:
-          - dogbreed:/opt/mount
+          - dogbreed:/app
         network_mode: "host"
-        command: ["python", "train.py"]
+        command: ["python3", "-m" ,"src.train"]
+        shm_size: '2gb'
 
     evaluate:
         build: 
             context: .
             dockerfile: Dockerfile
         volumes:
-          - dogbreed:/opt/mount
+          - dogbreed:/app
         network_mode: "host"
-        command: ["python", "eval.py"]
+        command: ["python3", "-m", "src.eval"]
+        shm_size: '2gb'
 
     infer:
         build: 
             context: .
             dockerfile: Dockerfile
         volumes:
-          - dogbreed:/opt/mount
+          - dogbreed:/app
         network_mode: "host"
-        command: ["python", "infer.py"]
+        command: ["python3","-m", "src.infer"]
+        shm_size: '2gb'
 
 volumes:
    dogbreed:

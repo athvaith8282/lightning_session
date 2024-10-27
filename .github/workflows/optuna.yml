@@ -1,0 +1,76 @@
+name: Train and Find Hparam
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    branches: [ main ]
+
+jobs:
+  train-and-report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      repository-projects: write
+      id-token: write
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install uv
+      uses: astral-sh/setup-uv@v2
+
+    - name: Set up Python 3.12
+      run: uv python install 3.12
+
+    - name: Install dependencies
+      env:
+        UV_EXTRA_INDEX_URL: https://download.pytorch.org/whl/cpu
+      run: |
+        uv sync
+
+    - name: Setup DVC
+      uses: iterative/setup-dvc@v1
+
+    - name: Setup CML
+      uses: iterative/setup-cml@v2
+    
+    - name: Info DVC 
+      run: dvc doctor
+
+    - name: Pull DVC data
+      env:
+        GDRIVE_CREDENTIALS_DATA: ${{ secrets.GDRIVE_CRED_JSON }}
+      run: dvc pull data/CatRabbit -v 
+
+    - name: Train model
+      run: |
+        uv run dvc repro
+    
+    - name: Create CML report
+      env:
+        REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        echo "## Training Metrics" >> report.md
+        
+        # Find the latest metrics.csv file
+        METRICS_FILE=$(find logs/CatRabbit_128/multiruns -name "optimization_results.yaml" | sort -r | head -n 1)
+
+        echo -e "# Optuna Results\n" > report.md
+        cat ${METRICS_FILE} >> report.md 
+
+        # Find the logs folder
+        LOGS_DIR=$(find $(pwd) -type d -name "logs" | head -n 1)
+        
+        # Generate plots using the Python script
+        uv run python scripts/optuna_plots.py ${LOGS_DIR}
+
+        # Add plots to the report
+        echo "### Accuracy" >> report.md
+        echo '![](./training_plots/training_and_validation_accuracy_plot.png "Accuracy plot")' >> report.md
+       
+        echo "### Loss" >> report.md
+        echo '![](./training_plots/training_and_validation_loss_plot.png "Loss plot")' >> report.md
+        
+        # Create and post the report
+        cml comment create report.md

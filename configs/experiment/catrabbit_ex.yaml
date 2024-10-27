@@ -1,0 +1,39 @@
+# @package _global_
+
+defaults:
+  - override /data: catrabbit
+  - override /model: timm_classifier
+  - override /callbacks: default
+  - override /loggers: default
+  - override /trainer: default
+
+model:
+  base_model_name: convnext_small
+  num_classes: 2
+  pretrained: False
+  depths: [2,2,2,2]
+  dims: [16,32,64,128]
+  ls_init_value: 1e-6
+  patch_size: 4
+
+trainer:
+  min_epochs: 1
+  max_epochs: 2 
+
+callbacks:
+  model_checkpoint:
+    monitor: "val/acc"
+    mode: "max"
+    save_top_k: 1
+    save_last: True
+  
+  early_stopping:
+    monitor: "val/acc"
+    patience: 10
+    mode: "max"
+
+seed: 42 
+task_name: CatRabbit_128
+tags: ["run1"]
+train: True
+test: True

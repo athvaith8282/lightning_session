@@ -1,0 +1,11 @@
+stages:
+  train:
+    cmd: python3 -m src.train --multirun experiment=catrabbit_ex hparam=catrabbit
+    deps:
+    - configs/experiment/catrabbit_ex.yaml
+    - configs/hparam/catrabbit.yaml
+    - data/
+    - src/train.py
+    outs:
+    - logs/:
+        cache: false

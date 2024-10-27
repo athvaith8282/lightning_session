@@ -1,0 +1,5 @@
+defaults:
+  - tensorboard_logger
+  - csv
+  - aim
+  - mlflow
