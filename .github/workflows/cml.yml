@@ -1,6 +1,8 @@
 name: Train and Report
 
-on: []
+on: 
+  push:
+    branches: [ session_07 ]
 
 jobs:
   train-and-report:
