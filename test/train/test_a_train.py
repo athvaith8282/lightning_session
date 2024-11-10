@@ -8,7 +8,7 @@ def config():
     with hydra.initialize(version_base=None, config_path="../../configs"):
         cfg = hydra.compose(
             config_name="train",
-            overrides=["experiment=dogbreed_ex"],
+            overrides=["experiment=catrabbit_ex"],
         )
         return cfg
 
@@ -26,9 +26,9 @@ def config():
 #     # Run training
 #     train(trainer, model, datamodule)
 
-def test_dogbreed_ex_main(config, tmp_path):
+def test_main(config, tmp_path):
 
     config.paths.output_dir = str(tmp_path)
-    config.paths.log_dir = str(tmp_path / "logs")
+    # config.paths.log_dir = str(tmp_path / "logs")
     # Run training
     main(config)

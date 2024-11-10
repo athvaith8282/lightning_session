@@ -1,12 +1,12 @@
 defaults:
   - paths: default
   - hydra: default
-  - data: catdog 
+  - data: catrabbit 
 
 task_name: "hydra_test"
 infer_n_images: 10
 num_classes: 2
-classes: ["Cat", "Dog"]
+classes: ["Cat", "Rabbit"]
 
 infer_model:
   _target_: src.model.timmclassifier.TimmClassifier.load_from_checkpoint

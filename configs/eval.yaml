@@ -1,5 +1,5 @@
 defaults:
-  - data: catdog
+  - data: catrabbit
   - loggers: tensorboard_logger
   - paths: default
   - trainer: default
