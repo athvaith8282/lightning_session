@@ -1,0 +1,150 @@
+name: session_08_pipeline
+on: 
+  push:
+    branches: [ session_08 ]
+jobs:
+  start-runner:
+    name: Start self-hosted EC2 runner
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.start-ec2-runner.outputs.label }}
+      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Start EC2 runner
+        id: start-ec2-runner
+        uses: machulav/ec2-github-runner@v2
+        with:
+          mode: start
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          ec2-image-id: ami-0a646868bb3c2f79f
+          ec2-instance-type: g4dn.xlarge
+          subnet-id: subnet-0aee6e60c91d9da5b
+          security-group-id: sg-012c3945b6bc826cf
+          iam-role-name: session-08-test-role # optional, requires additional permissions
+          aws-resource-tags: > # optional, requires additional permissions
+            [
+              {"Key": "Name", "Value": "ec2-github-runner"},
+              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
+            ]
+  run_pipeline:
+    name: Do the job on the runner
+    needs: start-runner # required to start the main job when the runner is ready
+    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v2
+
+      - name: Set up Python 3.12
+        run: uv python install 3.12
+
+      - name: Install dependencies
+        run: |
+          uv sync
+      
+      - name: Setup DVC
+        uses: iterative/setup-dvc@v1
+      
+      - name: Setup CML
+        uses: iterative/setup-cml@v2
+      
+      - name: Pull DVC data
+        run: dvc pull -r session08_s3 data/CatRabbit
+      
+      - name: Run tests with coverage
+        run: |
+            uv run coverage run -m pytest
+            uv run coverage xml -o coverage.xml
+    
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage.xml
+          fail_ci_if_error: true
+      
+      - name: Train model
+        run: |
+          uv run dvc repro
+        
+      - name: Create CML report
+        env:
+          REPO_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "## Training Metrics" >> report.md
+          
+          # Find the latest metrics.csv file
+          METRICS_FILE=$(find logs/cat_dog_exp/runs -name "metrics.csv" | sort -r | head -n 1)
+          
+          # Generate plots using the Python script
+          uv run python scripts/generate_plots.py "$METRICS_FILE"
+          
+          #push results to s3
+          uv run python scripts/push_model_to_s3.py logs/
+  
+          # Add plots to the report
+          echo "### Accuracy" >> report.md
+          echo '![](./training_and_validation_accuracy_plot.png "Accuracy plot")' >> report.md
+          
+          echo "### Loss" >> report.md
+          echo '![](./training_and_validation_loss_plot.png "Loss plot")' >> report.md
+          
+          echo '### Confusion_matrix'
+          echo '![](./confusion_matrix.png "Confusion matrix")' >> report.md
+  
+  
+          echo "## Prediction Images" >> report.md
+          for image in prediction/*.png; do
+            echo "![]($image)" >> report.md
+          done
+  
+          
+          # Add test metrics if available
+          if grep -q "test/acc" $METRICS_FILE; then
+            echo "## Test Metrics" >> report.md
+            TEST_ACC=$(tail -n 1 $METRICS_FILE | cut -d',' -f3)
+            TEST_LOSS=$(tail -n 1 $METRICS_FILE | cut -d',' -f4)
+            echo "- Test Accuracy: $TEST_ACC" >> report.md
+            echo "- Test Loss: $TEST_LOSS" >> report.md
+          fi
+          
+          # Create and post the report
+          cml comment create report.md
+      - name: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          REPOSITORY: athvaith/session_08
+          IMAGE_TAG: ${{ github.repository }}
+          run: |
+            docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
+            docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+    
+  stop-runner:
+    name: Stop self-hosted EC2 runner
+    needs:
+      - start-runner # required to get output from the start-runner job
+      - run_pipeline # required to wait when the main job is done
+    runs-on: ubuntu-latest
+    if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      - name: Stop EC2 runner
+        uses: machulav/ec2-github-runner@v2
+        with:
+          mode: stop
+          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
+          label: ${{ needs.start-runner.outputs.label }}
+          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
