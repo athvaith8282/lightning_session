@@ -22,6 +22,7 @@ jobs:
       - name: Setup DVC
         uses: iterative/setup-dvc@v1
       
+      #check for cml 
       - name: Setup CML
         uses: iterative/setup-cml@v2
       
