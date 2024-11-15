@@ -28,7 +28,7 @@ COPY --from=builder --chown=app:app /app /app
 # Place executables in the environment at the front of the path
 ENV PATH="/app/.venv/bin:$PATH"
 
-RUN mkdir /app/data
+RUN mkdir -p /app/data
 
 # Set the working directory
 WORKDIR /app
