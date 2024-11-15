@@ -40,6 +40,9 @@ jobs:
       - name: Train model
         run: |
           uv run dvc repro
+      - name: Push to s3
+        run: |
+          uv run python scripts/push_model_to_s3.py logs/
       - name: login-ecr
         run: |
             aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 495599772594.dkr.ecr.ap-south-1.amazonaws.com
