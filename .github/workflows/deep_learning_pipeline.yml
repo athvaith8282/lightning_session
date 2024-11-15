@@ -41,13 +41,7 @@ jobs:
         run: |
           uv run dvc repro
       - name: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-        with:
-          aws-region: ap-south-1
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: athvaith/session_08
-          IMAGE_TAG: ${{ github.repository }}
-          run: |
-            docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
-            docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
+        run: |
+            aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 495599772594.dkr.ecr.ap-south-1.amazonaws.com
+            docker build -t 495599772594.dkr.ecr.ap-south-1.amazonaws.com/athvaith/session_08:latest .
+            docker push 495599772594.dkr.ecr.ap-south-1.amazonaws.com/athvaith/session_08:latest
