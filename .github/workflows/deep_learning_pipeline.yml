@@ -3,39 +3,9 @@ on:
   push:
     branches: [ session_08 ]
 jobs:
-  start-runner:
-    name: Start self-hosted EC2 runner
-    runs-on: ubuntu-latest
-    outputs:
-      label: ${{ steps.start-ec2-runner.outputs.label }}
-      ec2-instance-id: ${{ steps.start-ec2-runner.outputs.ec2-instance-id }}
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Start EC2 runner
-        id: start-ec2-runner
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: start
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          ec2-image-id: ami-0a646868bb3c2f79f
-          ec2-instance-type: g4dn.xlarge
-          subnet-id: subnet-0aee6e60c91d9da5b
-          security-group-id: sg-012c3945b6bc826cf
-          iam-role-name: session-08-test-role # optional, requires additional permissions
-          aws-resource-tags: > # optional, requires additional permissions
-            [
-              {"Key": "Name", "Value": "ec2-github-runner"},
-              {"Key": "GitHubRepository", "Value": "${{ github.repository }}"}
-            ]
   run_pipeline:
     name: Do the job on the runner
-    needs: start-runner # required to start the main job when the runner is ready
-    runs-on: ${{ needs.start-runner.outputs.label }} # run the job on the newly created runner
+    runs-on: self-hosted # run the job on the newly created runner
     steps:
       - uses: actions/checkout@v4
 
@@ -126,25 +96,3 @@ jobs:
           run: |
             docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG .
             docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-    
-  stop-runner:
-    name: Stop self-hosted EC2 runner
-    needs:
-      - start-runner # required to get output from the start-runner job
-      - run_pipeline # required to wait when the main job is done
-    runs-on: ubuntu-latest
-    if: ${{ always() }} # required to stop the runner even if the error happened in the previous jobs
-    steps:
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AWS_REGION }}
-      - name: Stop EC2 runner
-        uses: machulav/ec2-github-runner@v2
-        with:
-          mode: stop
-          github-token: ${{ secrets.GH_PERSONAL_ACCESS_TOKEN }}
-          label: ${{ needs.start-runner.outputs.label }}
-          ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
