@@ -42,6 +42,8 @@ jobs:
           uv run dvc repro
       - name: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+        with:
+          aws-region: ap-south-1
         env:
           REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           REPOSITORY: athvaith/session_08
